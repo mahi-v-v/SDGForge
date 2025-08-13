@@ -1,126 +1,59 @@
-// src/QuizPage.jsx
+import { useState } from 'react';
+import { FileText } from 'lucide-react';
 
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+const QuizPage = ({ setCurrentPage, questions }) => {
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const currentQuestion = questions[currentQuestionIndex];
 
-function QuizPage() {
-    const { examId } = useParams();
-    const navigate = useNavigate();
-
-    const [currentQuestion, setCurrentQuestion] = useState(null);
-    const [selectedOption, setSelectedOption] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-
-    // Fetch the first question when the component mounts.
-    useEffect(() => {
-        const fetchFirstQuestion = async () => {
-            setLoading(true);
-            try {
-                // Assuming the start-exam endpoint returns the first question.
-                // If not, you'd need a separate endpoint like /api/get-question/examId
-                // For this example, we'll assume the start-exam endpoint returned it.
-                // For now, let's mock it for the demo.
-                setCurrentQuestion({
-                  id: 1,
-                  question: 'What is a firewall?',
-                  options: ['A wall that has a fire on it', 'A network security device', 'A tool for managing fires', 'A type of operating system'],
-                  answer: 'A network security device'
-                });
-            } catch (err) {
-                setError('Failed to load the first question.');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        // In a real app, you would fetch the first question here if it wasn't
-        // returned by the start-exam endpoint.
-        // fetchFirstQuestion();
-    }, [examId]);
-
-    const handleOptionSelect = (option) => {
-        setSelectedOption(option);
-    };
-
-    const handleSubmit = async () => {
-        if (!selectedOption) {
-            setError('Please select an option.');
-            return;
-        }
-
-        setLoading(true);
-        setError('');
-
-        try {
-            const response = await axios.post('http://127.0.0.1:5000/api/submit-answer', {
-                exam_id: examId,
-                question_id: currentQuestion.id,
-                answer: selectedOption,
-            });
-
-            // If the backend returns a new question, update the state.
-            // If the backend indicates the exam is over, navigate to results.
-            if (response.data.next_question) {
-                setCurrentQuestion(response.data.next_question);
-                setSelectedOption(null); // Clear selected option for next question
-            } else if (response.data.exam_finished) {
-                navigate(`/results/${examId}`);
-            }
-        } catch (err) {
-            if (err.response) {
-                setError(`Error submitting answer: ${err.response.data.error || 'Server error'}`);
-            } else {
-                setError('An unexpected error occurred.');
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (loading) {
-        return <div className="loading-indicator">Loading question...</div>;
+  const handleNextQuestion = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    } else {
+      setCurrentPage('results');
     }
+  };
 
-    if (error) {
-        return <div className="error-message">{error}</div>;
-    }
-
-    return (
-        <div>
-            <h2>Adaptive Exam</h2>
-            {currentQuestion ? (
-                <div>
-                    <div className="question-container">
-                        <h3>{currentQuestion.question}</h3>
-                        <div className="options-list">
-                            {currentQuestion.options.map((option, index) => (
-                                <div
-                                    key={index}
-                                    className={`option-item ${selectedOption === option ? 'selected' : ''}`}
-                                    onClick={() => handleOptionSelect(option)}
-                                >
-                                    {option}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="submit-area">
-                        <button
-                            onClick={handleSubmit}
-                            disabled={!selectedOption || loading}
-                            className="button"
-                        >
-                            Submit Answer
-                        </button>
-                    </div>
-                </div>
-            ) : (
-                <div style={{ textAlign: 'center' }}>No questions available. Please start a new exam.</div>
-            )}
+  return (
+    <div className="bg-white p-8 rounded-lg shadow-xl max-w-2xl w-full text-center space-y-6">
+      <div className="flex items-center justify-center">
+        <FileText size={48} className="text-green-500" />
+      </div>
+      <h1 className="text-3xl font-bold text-gray-800">Adaptive Exam</h1>
+      <p className="text-gray-600">
+        This is where the exam questions will be displayed.
+      </p>
+      {currentQuestion ? (
+        <div className="border border-gray-300 p-4 rounded-lg text-left bg-gray-50 space-y-4">
+          <p className="font-medium text-lg">Question #{currentQuestionIndex + 1}</p>
+          <p>{currentQuestion.question}</p>
+          <div className="space-y-2">
+            {currentQuestion.options.map((option, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id={`option-${index}`}
+                  name="question-options"
+                  value={option}
+                  className="form-radio text-blue-600"
+                />
+                <label htmlFor={`option-${index}`}>{option}</label>
+              </div>
+            ))}
+          </div>
         </div>
-    );
-}
+      ) : (
+        <p className="text-red-500">No questions available. Please go back and upload a file.</p>
+      )}
+      <div className="flex justify-end mt-6">
+        <button
+          onClick={handleNextQuestion}
+          className="bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-lg hover:bg-green-700 transition-colors shadow-lg"
+        >
+          {currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'Submit & View Results'}
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default QuizPage;

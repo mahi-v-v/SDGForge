@@ -1,63 +1,27 @@
-// src/ResultsPage.jsx
+import { BarChart2 } from 'lucide-react';
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import axios from 'axios';
-
-function ResultsPage() {
-    const { examId } = useParams();
-    const [results, setResults] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        let isMounted = true;
-        const fetchResults = async () => {
-            try {
-                const response = await axios.post('http://127.0.0.1:5000/api/end-exam', { exam_id: examId });
-                if (isMounted) {
-                    setResults(response.data);
-                }
-            } catch (err) {
-                if (isMounted) {
-                    setError('Failed to fetch exam results.');
-                }
-            } finally {
-                if (isMounted) {
-                    setLoading(false);
-                }
-            }
-        };
-
-        fetchResults();
-
-        // Cleanup function to prevent state updates on unmounted component
-        return () => {
-            isMounted = false;
-        };
-    }, [examId]);
-
-    if (loading) {
-        return <div className="loading-indicator">Loading results...</div>;
-    }
-
-    if (error) {
-        return <div className="error-message">{error}</div>;
-    }
-
-    return (
-        <div className="results-page">
-            <h2>Exam Results</h2>
-            {results ? (
-                <div>
-                    <p>Your score: <strong>{results.score}</strong> out of <strong>{results.total_questions}</strong></p>
-                    <p>Performance: <strong>{results.performance}</strong></p>
-                </div>
-            ) : (
-                <p>No results found for this exam.</p>
-            )}
-        </div>
-    );
-}
+const ResultsPage = ({ setCurrentPage }) => {
+  return (
+    <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full text-center space-y-6">
+      <div className="flex items-center justify-center">
+        <BarChart2 size={48} className="text-purple-500" />
+      </div>
+      <h1 className="text-3xl font-bold text-gray-800">Exam Results</h1>
+      <p className="text-gray-600">
+        This page will show the user's score, performance, and feedback based on their exam session.
+      </p>
+      {/* Placeholder for future results display */}
+      <div className="mt-4">
+        <p className="text-2xl font-bold">Your Score: <span className="text-purple-600">85%</span></p>
+      </div>
+      <button
+        onClick={() => setCurrentPage('upload')}
+        className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-semibold text-lg hover:bg-purple-700 transition-colors shadow-lg"
+      >
+        Restart
+      </button>
+    </div>
+  );
+};
 
 export default ResultsPage;
